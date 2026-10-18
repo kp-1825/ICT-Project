@@ -1,0 +1,1463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rent-O-Drive | Vehicle Rental System</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            500: '#0284c7',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col antialiased selection:bg-sky-500 selection:text-white">
+
+    <!-- TOP ANNOUNCEMENT / SYSTEM BAR -->
+    <div class="bg-slate-900 text-slate-300 text-xs py-1.5 px-4 flex justify-between items-center border-b border-slate-800">
+        <div class="flex items-center gap-2">
+            <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span class="font-medium text-slate-200">Rent-O-Drive System Active</span>
+            <span class="text-slate-500">|</span>
+            <span id="current-user-display" class="text-slate-400">Logged in as: <strong class="text-white" id="user-role-label">Customer</strong></span>
+        </div>
+        <div class="flex items-center gap-4 text-xs">
+            <button onclick="resetSystemData()" class="text-slate-400 hover:text-amber-400 transition-colors flex items-center gap-1" title="Reset all data back to default initial state">
+                <i class="fa-solid fa-rotate-left text-[10px]"></i> Reset Demo Data
+            </button>
+        </div>
+    </div>
+
+    <!-- MAIN NAVBAR & ROLE SWITCHER -->
+    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <!-- Brand Logo -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-sky-500/20">
+                    <i class="fa-solid fa-car-side text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight text-slate-900 leading-none">Rent-O-Drive</h1>
+                    <p class="text-[10px] font-semibold text-sky-600 tracking-wider uppercase mt-0.5">Vehicle Rental Portal</p>
+                </div>
+            </div>
+
+            <!-- Role Selector Nav Tabs -->
+            <nav class="hidden md:flex items-center p-1 bg-slate-100 rounded-xl border border-slate-200/80">
+                <button onclick="switchRole('customer')" id="nav-btn-customer" class="role-nav-btn px-4 py-1.5 text-xs font-semibold rounded-lg transition-all text-sky-700 bg-white shadow-sm">
+                    <i class="fa-solid fa-user text-xs mr-1.5"></i> Customer
+                </button>
+                <button onclick="switchRole('seller')" id="nav-btn-seller" class="role-nav-btn px-4 py-1.5 text-xs font-semibold rounded-lg transition-all text-slate-600 hover:text-slate-900">
+                    <i class="fa-solid fa-store text-xs mr-1.5"></i> Vehicle Owner
+                </button>
+                <button onclick="switchRole('driver')" id="nav-btn-driver" class="role-nav-btn px-4 py-1.5 text-xs font-semibold rounded-lg transition-all text-slate-600 hover:text-slate-900">
+                    <i class="fa-solid fa-id-card text-xs mr-1.5"></i> Driver
+                </button>
+                <button onclick="switchRole('admin')" id="nav-btn-admin" class="role-nav-btn px-4 py-1.5 text-xs font-semibold rounded-lg transition-all text-slate-600 hover:text-slate-900">
+                    <i class="fa-solid fa-user-shield text-xs mr-1.5"></i> Admin
+                </button>
+            </nav>
+
+            <!-- User Auth Controls -->
+            <div class="flex items-center gap-3">
+                <button onclick="openAuthModal('login')" class="px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:text-sky-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
+                    Sign In
+                </button>
+                <button onclick="openAuthModal('register')" class="px-3.5 py-1.5 text-xs font-semibold text-white bg-sky-600 hover:bg-sky-700 rounded-lg shadow-sm transition-colors flex items-center gap-1.5">
+                    <i class="fa-solid fa-user-plus text-[10px]"></i> Register
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Nav Bar (Below header on small screens) -->
+        <div class="md:hidden flex border-t border-slate-200 bg-slate-50 overflow-x-auto p-1 text-xs">
+            <button onclick="switchRole('customer')" id="mob-btn-customer" class="role-mob-btn flex-1 min-w-[90px] py-2 text-center font-semibold text-sky-600 border-b-2 border-sky-600">Customer</button>
+            <button onclick="switchRole('seller')" id="mob-btn-seller" class="role-mob-btn flex-1 min-w-[90px] py-2 text-center font-medium text-slate-600">Owner</button>
+            <button onclick="switchRole('driver')" id="mob-btn-driver" class="role-mob-btn flex-1 min-w-[90px] py-2 text-center font-medium text-slate-600">Driver</button>
+            <button onclick="switchRole('admin')" id="mob-btn-admin" class="role-mob-btn flex-1 min-w-[90px] py-2 text-center font-medium text-slate-600">Admin</button>
+        </div>
+    </header>
+
+    <!-- NOTIFICATION TOASTER -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- MAIN PORTAL CONTAINER -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- ========================================== -->
+        <!-- 1. CUSTOMER DASHBOARD & BOOKING PORTAL     -->
+        <!-- ========================================== -->
+        <section id="portal-customer" class="portal-section space-y-6">
+            <!-- Customer Header / Welcome -->
+            <div class="bg-gradient-to-r from-slate-900 via-sky-900 to-indigo-900 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
+                <div class="absolute -right-10 -bottom-10 opacity-10 text-white text-9xl pointer-events-none">
+                    <i class="fa-solid fa-car"></i>
+                </div>
+                <div class="relative z-10 max-w-2xl">
+                    <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-sky-500/20 text-sky-300 border border-sky-400/30 mb-2">Customer Dashboard</span>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Find & Rent Your Perfect Vehicle</h2>
+                    <p class="text-slate-300 text-xs sm:text-sm mt-1">Hourly, daily, or monthly rentals with optional verified personal driver services.</p>
+                </div>
+            </div>
+
+            <!-- Filters Bar -->
+            <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div>
+                    <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Vehicle Type</label>
+                    <select id="filter-type" onchange="applyVehicleFilters()" class="w-full text-xs font-medium bg-slate-50 border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                        <option value="all">All Types (Car, Bike, Scooter)</option>
+                        <option value="Car">Cars</option>
+                        <option value="Bike">Bikes / Motorcycles</option>
+                        <option value="Scooter">Scooters</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Location</label>
+                    <input type="text" id="filter-location" oninput="applyVehicleFilters()" placeholder="Search city or area..." class="w-full text-xs font-medium bg-slate-50 border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Rental Duration Type</label>
+                    <select id="filter-duration" onchange="applyVehicleFilters()" class="w-full text-xs font-medium bg-slate-50 border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                        <option value="all">Any Pricing Model</option>
+                        <option value="Hourly">Hourly Rates</option>
+                        <option value="Daily">Daily Rates</option>
+                        <option value="Monthly">Monthly Rates</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Max Price (₹/day)</label>
+                    <input type="number" id="filter-price" oninput="applyVehicleFilters()" placeholder="e.g. 5000" class="w-full text-xs font-medium bg-slate-50 border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                </div>
+            </div>
+
+            <!-- Customer Tabs: Available Vehicles vs My Bookings -->
+            <div class="border-b border-slate-200 flex gap-6">
+                <button onclick="switchCustomerTab('browse')" id="cust-tab-browse" class="pb-2 text-xs font-bold border-b-2 border-sky-600 text-sky-600 transition-all flex items-center gap-1.5">
+                    <i class="fa-solid fa-list text-xs"></i> Browse Vehicles
+                </button>
+                <button onclick="switchCustomerTab('bookings')" id="cust-tab-bookings" class="pb-2 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition-all flex items-center gap-1.5">
+                    <i class="fa-solid fa-clock-history text-xs"></i> My Active Bookings & Trips
+                </button>
+            </div>
+
+            <!-- TAB 1: VEHICLE CATALOG GRID -->
+            <div id="cust-view-browse" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <!-- Dynamically Rendered Cards -->
+            </div>
+
+            <!-- TAB 2: MY BOOKINGS LIST -->
+            <div id="cust-view-bookings" class="hidden space-y-4">
+                <!-- Dynamically Rendered Bookings -->
+            </div>
+        </section>
+
+
+        <!-- ========================================== -->
+        <!-- 2. SELLER / VEHICLE OWNER DASHBOARD        -->
+        <!-- ========================================== -->
+        <section id="portal-seller" class="portal-section space-y-6 hidden">
+            <!-- Header -->
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <div>
+                    <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-600 border border-indigo-200 mb-1">Seller Console</span>
+                    <h2 class="text-xl font-bold text-slate-900">Vehicle Owner Dashboard</h2>
+                    <p class="text-xs text-slate-500">Manage your listed vehicles, rates, and inspect commission deductions.</p>
+                </div>
+                <button onclick="openAddVehicleModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-500/20 transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-plus"></i> List New Vehicle
+                </button>
+            </div>
+
+            <!-- Seller Summary Stats -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="text-slate-500 text-xs font-semibold uppercase">Total Vehicles</div>
+                    <div class="text-2xl font-bold text-slate-900 mt-1" id="seller-stat-count">0</div>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="text-slate-500 text-xs font-semibold uppercase">Total Bookings Fulfilled</div>
+                    <div class="text-2xl font-bold text-slate-900 mt-1" id="seller-stat-bookings">0</div>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="text-slate-500 text-xs font-semibold uppercase">Net Earnings (Post Commission)</div>
+                    <div class="text-2xl font-bold text-emerald-600 mt-1" id="seller-stat-earnings">₹0</div>
+                </div>
+            </div>
+
+            <!-- Seller Tabs: Managed Vehicles & Financial Ledger -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="border-b border-slate-200 bg-slate-50/50 px-6 py-3 flex gap-4">
+                    <button onclick="switchSellerTab('vehicles')" id="seller-tab-vehicles" class="text-xs font-bold text-indigo-600 border-b-2 border-indigo-600 pb-1">My Vehicles</button>
+                    <button onclick="switchSellerTab('earnings')" id="seller-tab-earnings" class="text-xs font-bold text-slate-500 hover:text-slate-800 pb-1">Earnings & Commission Breakdown</button>
+                </div>
+
+                <div id="seller-view-vehicles" class="p-6">
+                    <div id="seller-vehicles-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Dynamic seller vehicle cards -->
+                    </div>
+                </div>
+
+                <div id="seller-view-earnings" class="p-6 hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="bg-slate-100 text-slate-600 uppercase text-[10px] tracking-wider">
+                                    <th class="p-3">Booking ID</th>
+                                    <th class="p-3">Vehicle</th>
+                                    <th class="p-3">Gross Total</th>
+                                    <th class="p-3">Platform Comm (10%)</th>
+                                    <th class="p-3">Net Payout</th>
+                                    <th class="p-3">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="seller-earnings-table" class="divide-y divide-slate-200 text-slate-700">
+                                <!-- Dynamic rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ========================================== -->
+        <!-- 3. DRIVER DASHBOARD PORTAL                 -->
+        <!-- ========================================== -->
+        <section id="portal-driver" class="portal-section space-y-6 hidden">
+            <!-- Header & License Verification Status -->
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">Driver Portal</span>
+                        <span id="driver-dl-badge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                            <i class="fa-solid fa-circle-check text-[10px] mr-1"></i> Driving License Verified
+                        </span>
+                    </div>
+                    <h2 class="text-xl font-bold text-slate-900 mt-1">Driver Portal & Dispatch Console</h2>
+                    <p class="text-xs text-slate-500">Accept ride requests assigned by customers, manage active trips, and view earnings.</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="text-xs font-semibold text-slate-500">Duty Availability:</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="driver-toggle-online" checked onchange="toggleDriverDuty(this)" class="sr-only peer">
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Driver Stats -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="text-slate-500 text-xs font-semibold uppercase">Trips Completed</div>
+                    <div class="text-2xl font-bold text-slate-900 mt-1" id="driver-stat-trips">0</div>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="text-slate-500 text-xs font-semibold uppercase">Net Driver Pay</div>
+                    <div class="text-2xl font-bold text-emerald-600 mt-1" id="driver-stat-pay">₹0</div>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="text-slate-500 text-xs font-semibold uppercase">Platform Comm Deducted</div>
+                    <div class="text-2xl font-bold text-amber-600 mt-1" id="driver-stat-comm">₹0</div>
+                </div>
+            </div>
+
+            <!-- Incoming Requests & Active Trips -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Ride Requests -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
+                    <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                        <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+                            <i class="fa-solid fa-bell text-amber-500"></i> Incoming Ride Requests
+                        </h3>
+                        <span id="request-count-badge" class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold">0 Pending</span>
+                    </div>
+                    <div id="driver-requests-list" class="space-y-3">
+                        <!-- Dynamic Pending Requests -->
+                    </div>
+                </div>
+
+                <!-- Active Trip Workflow Simulator -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
+                    <h3 class="font-bold text-slate-900 text-sm border-b border-slate-100 pb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-route text-sky-500"></i> Active Trip Execution Simulator
+                    </h3>
+                    <div id="driver-active-trip-panel" class="text-slate-500 text-xs text-center py-8">
+                        No active assigned trip currently in progress.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ========================================== -->
+        <!-- 4. ADMIN CONTROL DASHBOARD                 -->
+        <!-- ========================================== -->
+        <section id="portal-admin" class="portal-section space-y-6 hidden">
+            <!-- Header -->
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex justify-between items-center">
+                <div>
+                    <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200 mb-1">Super Admin Dashboard</span>
+                    <h2 class="text-xl font-bold text-slate-900">System Oversight & Commission Controls</h2>
+                    <p class="text-xs text-slate-500">Audit overall earnings, verify documents, and configure platform commissions.</p>
+                </div>
+            </div>
+
+            <!-- System Metric Counters -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="text-slate-400 text-[10px] font-bold uppercase">Total Users</div>
+                    <div class="text-xl font-extrabold text-slate-900 mt-1" id="admin-stat-users">0</div>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="text-slate-400 text-[10px] font-bold uppercase">Listed Vehicles</div>
+                    <div class="text-xl font-extrabold text-slate-900 mt-1" id="admin-stat-vehicles">0</div>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="text-slate-400 text-[10px] font-bold uppercase">Active Rentals</div>
+                    <div class="text-xl font-extrabold text-sky-600 mt-1" id="admin-stat-active">0</div>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="text-slate-400 text-[10px] font-bold uppercase">Total Bookings</div>
+                    <div class="text-xl font-extrabold text-slate-900 mt-1" id="admin-stat-bookings">0</div>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm col-span-2 sm:col-span-1">
+                    <div class="text-slate-400 text-[10px] font-bold uppercase">Platform Revenue</div>
+                    <div class="text-xl font-extrabold text-emerald-600 mt-1" id="admin-stat-revenue">₹0</div>
+                </div>
+            </div>
+
+            <!-- Admin Sub-tabs -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="border-b border-slate-200 bg-slate-50/60 px-6 py-3 flex gap-6">
+                    <button onclick="switchAdminTab('verification')" id="admin-tab-verification" class="text-xs font-bold text-sky-600 border-b-2 border-sky-600 pb-1">Verification Center (ID / License)</button>
+                    <button onclick="switchAdminTab('commissions')" id="admin-tab-commissions" class="text-xs font-bold text-slate-500 hover:text-slate-800 pb-1">Commission Settings & Ledgers</button>
+                    <button onclick="switchAdminTab('all-bookings')" id="admin-tab-all-bookings" class="text-xs font-bold text-slate-500 hover:text-slate-800 pb-1">Global Bookings Master</button>
+                </div>
+
+                <!-- Verification Panel -->
+                <div id="admin-view-verification" class="p-6">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-4">Pending Driving License & ID Approvals</h4>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="bg-slate-100 text-slate-600 uppercase text-[10px]">
+                                    <th class="p-3">User Name</th>
+                                    <th class="p-3">Role</th>
+                                    <th class="p-3">ID Proof / License No.</th>
+                                    <th class="p-3">Status</th>
+                                    <th class="p-3">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-verification-table" class="divide-y divide-slate-200">
+                                <!-- Dynamic dynamic -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Commission Management Panel -->
+                <div id="admin-view-commissions" class="p-6 hidden space-y-6">
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div>
+                            <h4 class="font-bold text-sm text-slate-900">Platform Commission Rates</h4>
+                            <p class="text-xs text-slate-500">Adjust standard commission percentages levied across customer rentals, seller payouts, and driver services.</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <label class="text-xs font-bold text-slate-700">Platform Commission Rate:</label>
+                            <div class="flex items-center gap-1">
+                                <input type="number" id="admin-comm-input" value="10" min="0" max="50" class="w-16 text-xs p-1.5 border border-slate-300 rounded font-bold text-center">
+                                <span class="text-xs font-bold text-slate-600">%</span>
+                                <button onclick="saveCommissionRate()" class="ml-2 px-3 py-1.5 bg-sky-600 hover:bg-sky-700 text-white rounded text-xs font-bold">Update Rate</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Revenue Audit Ledger</h4>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse text-xs">
+                                <thead>
+                                    <tr class="bg-slate-100 text-slate-600 uppercase text-[10px]">
+                                        <th class="p-3">Booking ID</th>
+                                        <th class="p-3">Customer Paid</th>
+                                        <th class="p-3">Seller Share</th>
+                                        <th class="p-3">Driver Share</th>
+                                        <th class="p-3">Platform Profit</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-ledger-table" class="divide-y divide-slate-200">
+                                    <!-- Dynamic Rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- All Bookings Master List -->
+                <div id="admin-view-all-bookings" class="p-6 hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="bg-slate-100 text-slate-600 uppercase text-[10px]">
+                                    <th class="p-3">Booking ID</th>
+                                    <th class="p-3">Customer</th>
+                                    <th class="p-3">Vehicle</th>
+                                    <th class="p-3">Dates/Hours</th>
+                                    <th class="p-3">Driver Assigned</th>
+                                    <th class="p-3">Total Amount</th>
+                                    <th class="p-3">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-all-bookings-table" class="divide-y divide-slate-200">
+                                <!-- Dynamic Rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="mt-auto bg-slate-900 text-slate-400 text-xs py-6 border-t border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-car-side text-sky-400 text-base"></i>
+                <span class="font-bold text-white">Rent-O-Drive</span>
+                <span>— Vehicle Rental System Prototype</span>
+            </div>
+            <div class="text-slate-500 text-[11px]">
+                Built with Pure HTML, CSS (Tailwind) & JS | Follows SRS & UML Swimlane Design Specs
+            </div>
+        </div>
+    </footer>
+
+
+    <!-- ================================================================= -->
+    <!-- MODALS SECTION                                                    -->
+    <!-- ================================================================= -->
+
+    <!-- 1. AUTH MODAL (LOGIN / REGISTER) -->
+    <div id="modal-auth" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4 relative">
+            <button onclick="closeModal('modal-auth')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div id="auth-title-box">
+                <h3 class="text-xl font-bold text-slate-900" id="auth-modal-title">Sign In to Rent-O-Drive</h3>
+                <p class="text-xs text-slate-500">Access customer rentals, list vehicles, or serve as a driver.</p>
+            </div>
+
+            <form id="auth-form" onsubmit="handleAuthSubmit(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">User Role</label>
+                    <select id="auth-role" onchange="toggleAuthFields()" class="w-full text-xs p-2.5 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500">
+                        <option value="customer">Customer / Passenger</option>
+                        <option value="seller">Vehicle Owner / Seller</option>
+                        <option value="driver">Driver</option>
+                        <option value="admin">Administrator</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Email Address / Username</label>
+                    <input type="email" id="auth-email" required placeholder="user@example.com" class="w-full text-xs p-2.5 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Password</label>
+                    <input type="password" id="auth-password" required placeholder="••••••••" class="w-full text-xs p-2.5 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500">
+                </div>
+
+                <!-- Registration Extra Fields -->
+                <div id="register-extra-fields" class="space-y-3 hidden pt-2 border-t border-slate-100">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Full Name</label>
+                        <input type="text" id="auth-name" placeholder="John Doe" class="w-full text-xs p-2.5 bg-slate-50 border border-slate-300 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Government ID Proof Number</label>
+                        <input type="text" id="auth-idproof" placeholder="Aadhaar / National ID / Passport" class="w-full text-xs p-2.5 bg-slate-50 border border-slate-300 rounded-lg">
+                    </div>
+                    <div id="dl-input-container">
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Driving License Number <span class="text-amber-600">(Mandatory for Drivers)</span></label>
+                        <input type="text" id="auth-dl" placeholder="DL-142023009988" class="w-full text-xs p-2.5 bg-slate-50 border border-slate-300 rounded-lg">
+                    </div>
+                </div>
+
+                <button type="submit" id="auth-submit-btn" class="w-full py-2.5 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-bold shadow-md shadow-sky-500/20 transition-colors">
+                    Sign In
+                </button>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- 2. VEHICLE DETAILS & BOOKING MODAL -->
+    <div id="modal-vehicle-detail" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4 overflow-y-auto">
+        <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-100 space-y-5 my-8 relative">
+            <button onclick="closeModal('modal-vehicle-detail')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <!-- Vehicle Header Info -->
+            <div id="modal-veh-header" class="flex flex-col sm:flex-row gap-4 items-start sm:items-center border-b border-slate-100 pb-4">
+                <!-- Image or icon placeholder -->
+                <div id="modal-veh-image" class="w-20 h-20 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 text-3xl shrink-0">
+                    <i class="fa-solid fa-car"></i>
+                </div>
+                <div class="space-y-1">
+                    <div class="flex items-center gap-2">
+                        <span id="modal-veh-type" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-sky-100 text-sky-800">Car</span>
+                        <span id="modal-veh-status" class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">Available</span>
+                    </div>
+                    <h3 id="modal-veh-title" class="text-xl font-extrabold text-slate-900">Vehicle Title</h3>
+                    <div class="text-xs text-slate-500 flex flex-wrap gap-x-4 gap-y-1">
+                        <span><i class="fa-solid fa-id-card text-slate-400 mr-1"></i> Plate: <strong id="modal-veh-plate" class="text-slate-700">ABC-1234</strong></span>
+                        <span><i class="fa-solid fa-user-tag text-slate-400 mr-1"></i> Owner: <strong id="modal-veh-owner" class="text-slate-700">Seller Name</strong></span>
+                        <span><i class="fa-solid fa-location-dot text-slate-400 mr-1"></i> <span id="modal-veh-location">City</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Booking Form Workflow -->
+            <form id="booking-form" onsubmit="proceedToCheckout(event)" class="space-y-4">
+                <input type="hidden" id="booking-veh-id">
+                
+                <h4 class="text-xs font-bold uppercase text-slate-500 tracking-wider">Select Rental Duration & Options</h4>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Rental Type</label>
+                        <select id="book-duration-type" onchange="calculateBookingTotal()" class="w-full text-xs p-2 bg-slate-50 border border-slate-300 rounded-lg">
+                            <option value="Hourly">Hourly</option>
+                            <option value="Daily" selected>Daily</option>
+                            <option value="Monthly">Monthly</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Duration Count</label>
+                        <input type="number" id="book-duration-value" value="1" min="1" oninput="calculateBookingTotal()" class="w-full text-xs p-2 bg-slate-50 border border-slate-300 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Start Date</label>
+                        <input type="date" id="book-start-date" required class="w-full text-xs p-2 bg-slate-50 border border-slate-300 rounded-lg">
+                    </div>
+                </div>
+
+                <!-- Driver Appointment Option -->
+                <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <label for="book-driver-toggle" class="text-xs font-bold text-slate-800 flex items-center gap-2 cursor-pointer">
+                            <i class="fa-solid fa-user-tie text-sky-600"></i> Appoint Platform Driver?
+                        </label>
+                        <input type="checkbox" id="book-driver-toggle" onchange="toggleDriverOptions()" class="w-4 h-4 text-sky-600 rounded">
+                    </div>
+                    <p class="text-[11px] text-slate-500">Hire an accredited driver for ₹500/day. If unselected, you must submit your Driving License.</p>
+                </div>
+
+                <!-- Self Driving License Section -->
+                <div id="self-drive-license-sec" class="bg-amber-50/60 border border-amber-200 p-3 rounded-xl space-y-1">
+                    <label class="block text-xs font-bold text-amber-900">Mandatory Self-Driving License Submission</label>
+                    <input type="text" id="book-dl-number" placeholder="Enter Driving License No. (e.g. DL-98765432)" class="w-full text-xs p-2 bg-white border border-amber-300 rounded-lg">
+                    <p class="text-[10px] text-amber-700">Admin will verify your DL before ride dispatch is completed.</p>
+                </div>
+
+                <!-- Price Summary Box -->
+                <div class="bg-slate-900 text-white p-4 rounded-xl space-y-1.5 text-xs">
+                    <div class="flex justify-between text-slate-300">
+                        <span>Base Rental Charge:</span>
+                        <span id="price-base">₹0</span>
+                    </div>
+                    <div class="flex justify-between text-slate-300" id="price-driver-row">
+                        <span>Driver Hire Fee:</span>
+                        <span id="price-driver">₹0</span>
+                    </div>
+                    <div class="flex justify-between text-slate-300">
+                        <span>Platform Commission Fee (<span id="price-comm-percent">10</span>%):</span>
+                        <span id="price-comm">₹0</span>
+                    </div>
+                    <div class="border-t border-slate-800 pt-2 flex justify-between font-bold text-sm text-emerald-400">
+                        <span>Total Checkout Payable:</span>
+                        <span id="price-grand-total">₹0</span>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-lock text-xs"></i> Proceed to Secure Payment Gateway
+                </button>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- 3. ADD / EDIT VEHICLE MODAL (SELLER) -->
+    <div id="modal-seller-add" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 space-y-4 relative">
+            <button onclick="closeModal('modal-seller-add')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <h3 class="text-lg font-bold text-slate-900">List New Vehicle for Rent</h3>
+
+            <form id="add-vehicle-form" onsubmit="handleSaveVehicle(event)" class="space-y-3 text-xs">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Make / Brand</label>
+                        <input type="text" id="veh-make" required placeholder="e.g. Honda / Hyundai" class="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Model Name</label>
+                        <input type="text" id="veh-model" required placeholder="e.g. City / Activa" class="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Vehicle Type</label>
+                        <select id="veh-type" class="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg">
+                            <option value="Car">Car</option>
+                            <option value="Bike">Bike</option>
+                            <option value="Scooter">Scooter</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Year</label>
+                        <input type="number" id="veh-year" required value="2022" class="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">License Plate</label>
+                        <input type="text" id="veh-plate" required placeholder="GJ-01-AB-1234" class="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Hourly Price (₹)</label>
+                        <input type="number" id="veh-price-hr" required placeholder="150" class="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Daily Price (₹)</label>
+                        <input type="number" id="veh-price-day" required placeholder="1500" class="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Monthly Price (₹)</label>
+                        <input type="number" id="veh-price-mth" required placeholder="30000" class="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Location City / Area</label>
+                    <input type="text" id="veh-location" required placeholder="Vadodara, Downtown" class="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg">
+                </div>
+
+                <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-md transition-colors">
+                    Save Vehicle Listing
+                </button>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- JavaScript Business Logic -->
+    <script>
+        // =================================================================
+        // INITIAL DEFAULT STATE & SEED DATA
+        // =================================================================
+        const DEFAULT_COMMISSION_RATE = 10; // 10% Platform fee
+
+        const DEFAULT_VEHICLES = [
+            { id: 'v1', make: 'Hyundai', model: 'Creta SUV', year: 2023, plate: 'GJ-06-XY-9081', type: 'Car', priceHr: 200, priceDay: 2200, priceMth: 45000, location: 'Vadodara Central', sellerId: 's1', sellerName: 'Nilesh Motors', available: true },
+            { id: 'v2', make: 'Royal Enfield', model: 'Classic 350', year: 2022, plate: 'GJ-01-RE-4411', type: 'Bike', priceHr: 80, priceDay: 900, priceMth: 18000, location: 'Ahmedabad West', sellerId: 's1', sellerName: 'Nilesh Motors', available: true },
+            { id: 'v3', make: 'Honda', model: 'Activa 6G', year: 2023, plate: 'GJ-05-SC-1122', type: 'Scooter', priceHr: 40, priceDay: 450, priceMth: 8500, location: 'Surat City', sellerId: 's2', sellerName: 'Deep Rental Hub', available: true }
+        ];
+
+        const DEFAULT_USERS = [
+            { id: 'u_admin', email: 'admin@rentodrive.com', name: 'System Admin', role: 'admin', idProof: 'GOV-ADMIN-001', dlNumber: 'DL-ADMIN-001', verified: true },
+            { id: 'cust1', email: 'customer@demo.com', name: 'Kunj Patel', role: 'customer', idProof: 'ID-99882211', dlNumber: 'DL-GJ-2022-009', verified: true },
+            { id: 's1', email: 'seller@demo.com', name: 'Nilesh Motors', role: 'seller', idProof: 'ID-44556677', dlNumber: 'N/A', verified: true },
+            { id: 's2', email: 'deep@demo.com', name: 'Deep Rental Hub', role: 'seller', idProof: 'ID-88776655', dlNumber: 'N/A', verified: true },
+            { id: 'drv1', email: 'driver@demo.com', name: 'Ramesh Driver', role: 'driver', idProof: 'ID-11223344', dlNumber: 'DL-DRV-887711', verified: true, isOnline: true }
+        ];
+
+        const DEFAULT_BOOKINGS = [
+            {
+                id: 'BK-1001',
+                vehId: 'v1',
+                vehTitle: 'Hyundai Creta SUV',
+                customerId: 'cust1',
+                customerName: 'Devdutt Dave',
+                sellerId: 's1',
+                durationType: 'Daily',
+                durationValue: 2,
+                startDate: '2026-10-18',
+                driverRequested: true,
+                driverId: 'drv1',
+                driverName: 'Ramesh Driver',
+                dlSubmitted: 'DL-GJ-2022-009',
+                basePrice: 4400,
+                driverFee: 1000,
+                commissionFee: 540,
+                totalAmount: 5940,
+                status: 'Accepted' // Options: Pending, Accepted, In-Transit, Completed
+            }
+        ];
+
+        // Global State Objects
+        let state = {
+            currentUser: null,
+            activeRole: 'customer',
+            vehicles: [],
+            bookings: [],
+            users: [],
+            commissionRate: DEFAULT_COMMISSION_RATE
+        };
+
+        // Initialize state from LocalStorage or Default
+        function initStore() {
+            const savedVehicles = localStorage.getItem('rod_vehicles');
+            const savedBookings = localStorage.getItem('rod_bookings');
+            const savedUsers = localStorage.getItem('rod_users');
+            const savedComm = localStorage.getItem('rod_commission');
+
+            state.vehicles = savedVehicles ? JSON.parse(savedVehicles) : DEFAULT_VEHICLES;
+            state.bookings = savedBookings ? JSON.parse(savedBookings) : DEFAULT_BOOKINGS;
+            state.users = savedUsers ? JSON.parse(savedUsers) : DEFAULT_USERS;
+            state.commissionRate = savedComm ? parseFloat(savedComm) : DEFAULT_COMMISSION_RATE;
+
+            // Set default initial active user (Customer)
+            state.currentUser = state.users.find(u => u.role === 'customer') || state.users[1];
+
+            saveStore();
+            renderAllViews();
+        }
+
+        function saveStore() {
+            localStorage.setItem('rod_vehicles', JSON.stringify(state.vehicles));
+            localStorage.setItem('rod_bookings', JSON.stringify(state.bookings));
+            localStorage.setItem('rod_users', JSON.stringify(state.users));
+            localStorage.setItem('rod_commission', state.commissionRate.toString());
+        }
+
+        function resetSystemData() {
+            if(confirm("Reset all system data back to default initial state?")) {
+                localStorage.clear();
+                initStore();
+                showToast("System data reset to initial defaults.", "success");
+            }
+        }
+
+        // =================================================================
+        // ROLE & VIEW NAVIGATION
+        // =================================================================
+        function switchRole(role) {
+            state.activeRole = role;
+
+            // Automatically switch logged in user context to match selected role tab for demo ease
+            const roleUser = state.users.find(u => u.role === role);
+            if(roleUser) {
+                state.currentUser = roleUser;
+            }
+
+            // Update Header Display
+            document.getElementById('user-role-label').innerText = `${role.toUpperCase()} (${state.currentUser ? state.currentUser.name : 'Guest'})`;
+
+            // Update Tab active styles
+            document.querySelectorAll('.role-nav-btn').forEach(btn => {
+                btn.className = 'role-nav-btn px-4 py-1.5 text-xs font-semibold rounded-lg transition-all text-slate-600 hover:text-slate-900';
+            });
+            const activeNav = document.getElementById(`nav-btn-${role}`);
+            if(activeNav) activeNav.className = 'role-nav-btn px-4 py-1.5 text-xs font-semibold rounded-lg transition-all text-sky-700 bg-white shadow-sm';
+
+            // Show relevant portal section
+            document.querySelectorAll('.portal-section').forEach(sec => sec.classList.add('hidden'));
+            const activePortal = document.getElementById(`portal-${role}`);
+            if(activePortal) activePortal.classList.remove('hidden');
+
+            renderAllViews();
+        }
+
+        function renderAllViews() {
+            renderCustomerCatalog();
+            renderCustomerBookings();
+            renderSellerDashboard();
+            renderDriverDashboard();
+            renderAdminDashboard();
+        }
+
+
+        // =================================================================
+        // 1. CUSTOMER PORTAL LOGIC
+        // =================================================================
+        function switchCustomerTab(tab) {
+            if(tab === 'browse') {
+                document.getElementById('cust-view-browse').classList.remove('hidden');
+                document.getElementById('cust-view-bookings').classList.add('hidden');
+                document.getElementById('cust-tab-browse').className = 'pb-2 text-xs font-bold border-b-2 border-sky-600 text-sky-600 flex items-center gap-1.5';
+                document.getElementById('cust-tab-bookings').className = 'pb-2 text-xs font-bold border-b-2 border-transparent text-slate-500 flex items-center gap-1.5';
+            } else {
+                document.getElementById('cust-view-browse').classList.add('hidden');
+                document.getElementById('cust-view-bookings').classList.remove('hidden');
+                document.getElementById('cust-tab-browse').className = 'pb-2 text-xs font-bold border-b-2 border-transparent text-slate-500 flex items-center gap-1.5';
+                document.getElementById('cust-tab-bookings').className = 'pb-2 text-xs font-bold border-b-2 border-sky-600 text-sky-600 flex items-center gap-1.5';
+            }
+        }
+
+        function applyVehicleFilters() {
+            renderCustomerCatalog();
+        }
+
+        function renderCustomerCatalog() {
+            const container = document.getElementById('cust-view-browse');
+            const filterType = document.getElementById('filter-type').value;
+            const filterLoc = document.getElementById('filter-location').value.toLowerCase();
+            const filterDur = document.getElementById('filter-duration').value;
+            const filterPrice = parseFloat(document.getElementById('filter-price').value) || Infinity;
+
+            const filtered = state.vehicles.filter(v => {
+                if(!v.available) return false;
+                if(filterType !== 'all' && v.type !== filterType) return false;
+                if(filterLoc && !v.location.toLowerCase().includes(filterLoc)) return false;
+                if(v.priceDay > filterPrice) return false;
+                return true;
+            });
+
+            if(filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full bg-white p-8 rounded-xl border border-slate-200 text-center text-slate-500">
+                        <i class="fa-solid fa-car-tunnel text-4xl text-slate-300 mb-2"></i>
+                        <p class="text-xs font-semibold">No vehicles match your selected search filters.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filtered.map(v => `
+                <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all overflow-hidden flex flex-col">
+                    <div class="bg-slate-100 h-36 flex items-center justify-center text-slate-400 relative">
+                        <i class="fa-solid ${v.type === 'Car' ? 'fa-car' : v.type === 'Bike' ? 'fa-motorcycle' : 'fa-scooter'} text-5xl"></i>
+                        <span class="absolute top-3 right-3 bg-white/90 backdrop-blur text-slate-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-slate-200">
+                            ${v.type}
+                        </span>
+                    </div>
+                    <div class="p-4 flex-grow flex flex-col justify-between space-y-3">
+                        <div>
+                            <div class="flex justify-between items-start">
+                                <h3 class="font-bold text-slate-900 text-sm">${v.make} ${v.model}</h3>
+                                <span class="text-xs font-extrabold text-sky-600">₹${v.priceDay}<span class="text-[10px] text-slate-400 font-normal">/day</span></span>
+                            </div>
+                            <p class="text-[11px] text-slate-500 mt-1 flex items-center gap-1">
+                                <i class="fa-solid fa-location-dot text-slate-400"></i> ${v.location}
+                            </p>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-1 bg-slate-50 p-2 rounded-lg text-center text-[10px] text-slate-600">
+                            <div><span class="block text-slate-400">Hourly</span>₹${v.priceHr}</div>
+                            <div><span class="block text-slate-400">Daily</span>₹${v.priceDay}</div>
+                            <div><span class="block text-slate-400">Monthly</span>₹${v.priceMth}</div>
+                        </div>
+
+                        <button onclick="openBookingModal('${v.id}')" class="w-full py-2 bg-slate-900 hover:bg-sky-600 text-white rounded-xl text-xs font-bold transition-colors">
+                            Book Vehicle
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderCustomerBookings() {
+            const container = document.getElementById('cust-view-bookings');
+            const myBookings = state.bookings.filter(b => b.customerId === state.currentUser.id);
+
+            if(myBookings.length === 0) {
+                container.innerHTML = `<div class="bg-white p-6 rounded-xl border border-slate-200 text-xs text-slate-500 text-center">No active or past bookings found.</div>`;
+                return;
+            }
+
+            container.innerHTML = myBookings.map(b => `
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <span class="font-mono text-[10px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-bold">${b.id}</span>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${b.status === 'Completed' ? 'bg-emerald-100 text-emerald-800' : 'bg-sky-100 text-sky-800'}">${b.status}</span>
+                        </div>
+                        <h4 class="font-bold text-slate-900 text-sm">${b.vehTitle}</h4>
+                        <p class="text-xs text-slate-500">
+                            Duration: ${b.durationValue} ${b.durationType}(s) | Start Date: ${b.startDate}
+                        </p>
+                        <p class="text-xs text-slate-500">
+                            Driver Appointed: <strong>${b.driverRequested ? (b.driverName || 'Pending Assignment') : 'Self Driving'}</strong>
+                        </p>
+                    </div>
+                    <div class="text-right sm:border-l sm:pl-4 border-slate-200">
+                        <div class="text-xs text-slate-400">Total Paid</div>
+                        <div class="text-base font-extrabold text-slate-900">₹${b.totalAmount}</div>
+                        <div class="text-[10px] text-slate-500">Includes ${state.commissionRate}% comm.</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openBookingModal(vehId) {
+            const veh = state.vehicles.find(v => v.id === vehId);
+            if(!veh) return;
+
+            document.getElementById('booking-veh-id').value = veh.id;
+            document.getElementById('modal-veh-title').innerText = `${veh.make} ${veh.model} (${veh.year})`;
+            document.getElementById('modal-veh-type').innerText = veh.type;
+            document.getElementById('modal-veh-plate').innerText = veh.plate;
+            document.getElementById('modal-veh-owner').innerText = veh.sellerName;
+            document.getElementById('modal-veh-location').innerText = veh.location;
+
+            // Pre-fill DL if present in user state
+            if(state.currentUser && state.currentUser.dlNumber) {
+                document.getElementById('book-dl-number').value = state.currentUser.dlNumber;
+            }
+
+            calculateBookingTotal();
+            document.getElementById('modal-vehicle-detail').classList.remove('hidden');
+        }
+
+        function toggleDriverOptions() {
+            const isDriverRequested = document.getElementById('book-driver-toggle').checked;
+            const selfDriveSec = document.getElementById('self-drive-license-sec');
+            if(isDriverRequested) {
+                selfDriveSec.classList.add('hidden');
+            } else {
+                selfDriveSec.classList.remove('hidden');
+            }
+            calculateBookingTotal();
+        }
+
+        function calculateBookingTotal() {
+            const vehId = document.getElementById('booking-veh-id').value;
+            const veh = state.vehicles.find(v => v.id === vehId);
+            if(!veh) return;
+
+            const durType = document.getElementById('book-duration-type').value;
+            const durVal = Math.max(1, parseInt(document.getElementById('book-duration-value').value) || 1);
+            const driverReq = document.getElementById('book-driver-toggle').checked;
+
+            let rate = veh.priceDay;
+            if(durType === 'Hourly') rate = veh.priceHr;
+            if(durType === 'Monthly') rate = veh.priceMth;
+
+            const basePrice = rate * durVal;
+            const driverFee = driverReq ? (500 * (durType === 'Hourly' ? 1 : durVal)) : 0;
+            const commFee = Math.round((basePrice + driverFee) * (state.commissionRate / 100));
+            const grandTotal = basePrice + driverFee + commFee;
+
+            document.getElementById('price-base').innerText = `₹${basePrice}`;
+            document.getElementById('price-driver').innerText = `₹${driverFee}`;
+            document.getElementById('price-comm-percent').innerText = state.commissionRate;
+            document.getElementById('price-comm').innerText = `₹${commFee}`;
+            document.getElementById('price-grand-total').innerText = `₹${grandTotal}`;
+        }
+
+        function proceedToCheckout(e) {
+            e.preventDefault();
+            const vehId = document.getElementById('booking-veh-id').value;
+            const veh = state.vehicles.find(v => v.id === vehId);
+            const durType = document.getElementById('book-duration-type').value;
+            const durVal = parseInt(document.getElementById('book-duration-value').value);
+            const startDate = document.getElementById('book-start-date').value;
+            const driverReq = document.getElementById('book-driver-toggle').checked;
+            const dlNo = document.getElementById('book-dl-number').value;
+
+            if(!driverReq && !dlNo) {
+                showToast("Please enter your Driving License number for self-driving.", "error");
+                return;
+            }
+
+            let rate = veh.priceDay;
+            if(durType === 'Hourly') rate = veh.priceHr;
+            if(durType === 'Monthly') rate = veh.priceMth;
+
+            const basePrice = rate * durVal;
+            const driverFee = driverReq ? (500 * durVal) : 0;
+            const commFee = Math.round((basePrice + driverFee) * (state.commissionRate / 100));
+            const grandTotal = basePrice + driverFee + commFee;
+
+            // Assign driver if requested
+            let assignedDriver = null;
+            if(driverReq) {
+                assignedDriver = state.users.find(u => u.role === 'driver');
+            }
+
+            const newBooking = {
+                id: 'BK-' + Math.floor(1000 + Math.random() * 9000),
+                vehId: veh.id,
+                vehTitle: `${veh.make} ${veh.model}`,
+                customerId: state.currentUser.id,
+                customerName: state.currentUser.name,
+                sellerId: veh.sellerId,
+                durationType: durType,
+                durationValue: durVal,
+                startDate: startDate,
+                driverRequested: driverReq,
+                driverId: assignedDriver ? assignedDriver.id : null,
+                driverName: assignedDriver ? assignedDriver.name : null,
+                dlSubmitted: dlNo || state.currentUser.dlNumber || 'N/A',
+                basePrice: basePrice,
+                driverFee: driverFee,
+                commissionFee: commFee,
+                totalAmount: grandTotal,
+                status: 'Pending'
+            };
+
+            // Toggle vehicle availability
+            veh.available = false;
+
+            state.bookings.unshift(newBooking);
+            saveStore();
+            closeModal('modal-vehicle-detail');
+            showToast("Payment Successful! Rental Booking Confirmed.", "success");
+            switchCustomerTab('bookings');
+            renderAllViews();
+        }
+
+
+        // =================================================================
+        // 2. SELLER PORTAL LOGIC
+        // =================================================================
+        function switchSellerTab(tab) {
+            if(tab === 'vehicles') {
+                document.getElementById('seller-view-vehicles').classList.remove('hidden');
+                document.getElementById('seller-view-earnings').classList.add('hidden');
+                document.getElementById('seller-tab-vehicles').className = 'text-xs font-bold text-indigo-600 border-b-2 border-indigo-600 pb-1';
+                document.getElementById('seller-tab-earnings').className = 'text-xs font-bold text-slate-500 pb-1';
+            } else {
+                document.getElementById('seller-view-vehicles').classList.add('hidden');
+                document.getElementById('seller-view-earnings').classList.remove('hidden');
+                document.getElementById('seller-tab-vehicles').className = 'text-xs font-bold text-slate-500 pb-1';
+                document.getElementById('seller-tab-earnings').className = 'text-xs font-bold text-indigo-600 border-b-2 border-indigo-600 pb-1';
+            }
+        }
+
+        function renderSellerDashboard() {
+            const myVehicles = state.vehicles.filter(v => v.sellerId === state.currentUser.id || state.currentUser.role === 'admin');
+            const myBookings = state.bookings.filter(b => b.sellerId === state.currentUser.id);
+
+            // Stats
+            document.getElementById('seller-stat-count').innerText = myVehicles.length;
+            document.getElementById('seller-stat-bookings').innerText = myBookings.length;
+
+            const grossEarned = myBookings.reduce((sum, b) => sum + b.basePrice, 0);
+            const netEarned = grossEarned * ((100 - state.commissionRate) / 100);
+            document.getElementById('seller-stat-earnings').innerText = `₹${Math.round(netEarned)}`;
+
+            // Vehicles list
+            const vehContainer = document.getElementById('seller-vehicles-list');
+            if(myVehicles.length === 0) {
+                vehContainer.innerHTML = `<div class="col-span-full text-slate-400 text-xs p-4 border border-dashed rounded-xl text-center">No vehicles listed under your account yet.</div>`;
+            } else {
+                vehContainer.innerHTML = myVehicles.map(v => `
+                    <div class="border border-slate-200 p-4 rounded-xl space-y-2 bg-slate-50/50">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="font-bold text-slate-900 text-xs">${v.make} ${v.model} (${v.year})</h4>
+                                <span class="text-[10px] text-slate-500 font-mono">${v.plate}</span>
+                            </div>
+                            <button onclick="toggleVehicleAvailability('${v.id}')" class="px-2 py-1 rounded text-[10px] font-bold ${v.available ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
+                                ${v.available ? 'Available' : 'Rented Out'}
+                            </button>
+                        </div>
+                        <div class="text-[11px] text-slate-600 flex justify-between pt-2 border-t border-slate-200">
+                            <span>Day: ₹${v.priceDay}</span>
+                            <span>Month: ₹${v.priceMth}</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // Earnings Table
+            const table = document.getElementById('seller-earnings-table');
+            if(myBookings.length === 0) {
+                table.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">No payout records found yet.</td></tr>`;
+            } else {
+                table.innerHTML = myBookings.map(b => {
+                    const comm = Math.round(b.basePrice * (state.commissionRate / 100));
+                    const payout = b.basePrice - comm;
+                    return `
+                        <tr>
+                            <td class="p-3 font-mono font-bold">${b.id}</td>
+                            <td class="p-3">${b.vehTitle}</td>
+                            <td class="p-3 font-semibold">₹${b.basePrice}</td>
+                            <td class="p-3 text-rose-600">-₹${comm}</td>
+                            <td class="p-3 font-bold text-emerald-600">₹${payout}</td>
+                            <td class="p-3"><span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-semibold">${b.status}</span></td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+        }
+
+        function openAddVehicleModal() {
+            document.getElementById('modal-seller-add').classList.remove('hidden');
+        }
+
+        function handleSaveVehicle(e) {
+            e.preventDefault();
+            const newVeh = {
+                id: 'v_' + Date.now(),
+                make: document.getElementById('veh-make').value,
+                model: document.getElementById('veh-model').value,
+                type: document.getElementById('veh-type').value,
+                year: parseInt(document.getElementById('veh-year').value),
+                plate: document.getElementById('veh-plate').value,
+                priceHr: parseFloat(document.getElementById('veh-price-hr').value),
+                priceDay: parseFloat(document.getElementById('veh-price-day').value),
+                priceMth: parseFloat(document.getElementById('veh-price-mth').value),
+                location: document.getElementById('veh-location').value,
+                sellerId: state.currentUser.id,
+                sellerName: state.currentUser.name,
+                available: true
+            };
+
+            state.vehicles.unshift(newVeh);
+            saveStore();
+            closeModal('modal-seller-add');
+            showToast("New vehicle successfully listed!", "success");
+            renderAllViews();
+        }
+
+        function toggleVehicleAvailability(vehId) {
+            const v = state.vehicles.find(x => x.id === vehId);
+            if(v) {
+                v.available = !v.available;
+                saveStore();
+                renderAllViews();
+            }
+        }
+
+
+        // =================================================================
+        // 3. DRIVER PORTAL LOGIC
+        // =================================================================
+        function toggleDriverDuty(checkbox) {
+            showToast(`Driver duty status set to ${checkbox.checked ? 'Online' : 'Offline'}`, "info");
+        }
+
+        function renderDriverDashboard() {
+            const assignedBookings = state.bookings.filter(b => b.driverRequested);
+            const pendingRequests = assignedBookings.filter(b => b.status === 'Pending');
+            const activeTrip = assignedBookings.find(b => b.status === 'Accepted' || b.status === 'In-Transit');
+            const completedTrips = assignedBookings.filter(b => b.status === 'Completed');
+
+            document.getElementById('request-count-badge').innerText = `${pendingRequests.length} Pending`;
+            document.getElementById('driver-stat-trips').innerText = completedTrips.length;
+
+            const totalDriverPay = completedTrips.reduce((sum, b) => sum + (b.driverFee * 0.9), 0);
+            const totalDriverComm = completedTrips.reduce((sum, b) => sum + (b.driverFee * 0.1), 0);
+
+            document.getElementById('driver-stat-pay').innerText = `₹${Math.round(totalDriverPay)}`;
+            document.getElementById('driver-stat-comm').innerText = `₹${Math.round(totalDriverComm)}`;
+
+            // Render Pending Requests
+            const reqContainer = document.getElementById('driver-requests-list');
+            if(pendingRequests.length === 0) {
+                reqContainer.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">No incoming ride requests right now.</p>`;
+            } else {
+                reqContainer.innerHTML = pendingRequests.map(b => `
+                    <div class="border border-amber-200 bg-amber-50/50 p-3 rounded-xl space-y-2">
+                        <div class="flex justify-between items-start text-xs">
+                            <span class="font-bold text-slate-900">${b.vehTitle}</span>
+                            <span class="font-extrabold text-emerald-700">₹${b.driverFee} Pay</span>
+                        </div>
+                        <p class="text-[11px] text-slate-600">Customer: ${b.customerName} (${b.durationValue} ${b.durationType})</p>
+                        <div class="flex gap-2 pt-1">
+                            <button onclick="updateBookingStatus('${b.id}', 'Accepted')" class="flex-1 py-1 bg-emerald-600 text-white rounded text-[11px] font-bold">Accept Ride</button>
+                            <button onclick="updateBookingStatus('${b.id}', 'Rejected')" class="px-3 py-1 bg-rose-100 text-rose-700 rounded text-[11px] font-bold">Reject</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // Render Active Trip Workflow
+            const activePanel = document.getElementById('driver-active-trip-panel');
+            if(!activeTrip) {
+                activePanel.innerHTML = `<div class="text-slate-400 text-xs py-6">No active ride in execution state.</div>`;
+            } else {
+                activePanel.innerHTML = `
+                    <div class="space-y-4 text-left">
+                        <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                            <div>
+                                <span class="font-bold text-slate-900 text-xs">${activeTrip.vehTitle}</span>
+                                <p class="text-[10px] text-slate-500">Booking ID: ${activeTrip.id}</p>
+                            </div>
+                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-sky-100 text-sky-800">${activeTrip.status}</span>
+                        </div>
+
+                        <!-- Step Swimlane Activity Simulation -->
+                        <div class="space-y-2 text-xs">
+                            <div class="flex items-center gap-2 ${activeTrip.status === 'Accepted' ? 'text-sky-600 font-bold' : 'text-slate-400'}">
+                                <i class="fa-solid fa-circle-dot"></i> Step 1: Request Accepted
+                            </div>
+                            <div class="flex items-center gap-2 ${activeTrip.status === 'In-Transit' ? 'text-sky-600 font-bold' : 'text-slate-400'}">
+                                <i class="fa-solid fa-car-side"></i> Step 2: Customer Picked Up / Ride In-Transit
+                            </div>
+                        </div>
+
+                        <div class="pt-2">
+                            ${activeTrip.status === 'Accepted' ? `
+                                <button onclick="updateBookingStatus('${activeTrip.id}', 'In-Transit')" class="w-full py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-lg text-xs">
+                                    Simulate Arrival at Pickup & Start Trip
+                                </button>
+                            ` : `
+                                <button onclick="completeTripAndRelease('${activeTrip.id}')" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs">
+                                    Simulate Drop-off & Complete Ride
+                                </button>
+                            `}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function updateBookingStatus(bookingId, status) {
+            const b = state.bookings.find(x => x.id === bookingId);
+            if(b) {
+                b.status = status;
+                saveStore();
+                showToast(`Booking ${bookingId} status updated to ${status}`, "info");
+                renderAllViews();
+            }
+        }
+
+        function completeTripAndRelease(bookingId) {
+            const b = state.bookings.find(x => x.id === bookingId);
+            if(b) {
+                b.status = 'Completed';
+                // Release vehicle
+                const veh = state.vehicles.find(v => v.id === b.vehId);
+                if(veh) veh.available = true;
+
+                saveStore();
+                showToast(`Trip ${bookingId} successfully completed!`, "success");
+                renderAllViews();
+            }
+        }
+
+
+        // =================================================================
+        // 4. ADMIN PORTAL LOGIC
+        // =================================================================
+        function switchAdminTab(tab) {
+            document.getElementById('admin-view-verification').classList.add('hidden');
+            document.getElementById('admin-view-commissions').classList.add('hidden');
+            document.getElementById('admin-view-all-bookings').classList.add('hidden');
+
+            document.getElementById('admin-tab-verification').className = 'text-xs font-bold text-slate-500 pb-1';
+            document.getElementById('admin-tab-commissions').className = 'text-xs font-bold text-slate-500 pb-1';
+            document.getElementById('admin-tab-all-bookings').className = 'text-xs font-bold text-slate-500 pb-1';
+
+            if(tab === 'verification') {
+                document.getElementById('admin-view-verification').classList.remove('hidden');
+                document.getElementById('admin-tab-verification').className = 'text-xs font-bold text-sky-600 border-b-2 border-sky-600 pb-1';
+            } else if(tab === 'commissions') {
+                document.getElementById('admin-view-commissions').classList.remove('hidden');
+                document.getElementById('admin-tab-commissions').className = 'text-xs font-bold text-sky-600 border-b-2 border-sky-600 pb-1';
+            } else {
+                document.getElementById('admin-view-all-bookings').classList.remove('hidden');
+                document.getElementById('admin-tab-all-bookings').className = 'text-xs font-bold text-sky-600 border-b-2 border-sky-600 pb-1';
+            }
+        }
+
+        function renderAdminDashboard() {
+            document.getElementById('admin-stat-users').innerText = state.users.length;
+            document.getElementById('admin-stat-vehicles').innerText = state.vehicles.length;
+            document.getElementById('admin-stat-active').innerText = state.bookings.filter(b => b.status !== 'Completed').length;
+            document.getElementById('admin-stat-bookings').innerText = state.bookings.length;
+
+            const totalRev = state.bookings.reduce((sum, b) => sum + b.commissionFee, 0);
+            document.getElementById('admin-stat-revenue').innerText = `₹${totalRev}`;
+            document.getElementById('admin-comm-input').value = state.commissionRate;
+
+            // Verification Table
+            const verTable = document.getElementById('admin-verification-table');
+            verTable.innerHTML = state.users.map(u => `
+                <tr>
+                    <td class="p-3 font-semibold">${u.name}</td>
+                    <td class="p-3 uppercase text-[10px] font-bold text-slate-500">${u.role}</td>
+                    <td class="p-3 font-mono">${u.dlNumber !== 'N/A' ? u.dlNumber : u.idProof}</td>
+                    <td class="p-3">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold ${u.verified ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
+                            ${u.verified ? 'Verified' : 'Pending Verification'}
+                        </span>
+                    </td>
+                    <td class="p-3">
+                        ${!u.verified ? `<button onclick="verifyUserDoc('${u.id}')" class="px-2 py-1 bg-sky-600 text-white rounded text-[10px] font-bold">Approve</button>` : '<span class="text-slate-400 text-[10px]">No action needed</span>'}
+                    </td>
+                </tr>
+            `).join('');
+
+            // Ledger Table
+            const ledgerTable = document.getElementById('admin-ledger-table');
+            ledgerTable.innerHTML = state.bookings.map(b => `
+                <tr>
+                    <td class="p-3 font-mono font-bold">${b.id}</td>
+                    <td class="p-3">₹${b.totalAmount}</td>
+                    <td class="p-3 text-emerald-600">₹${Math.round(b.basePrice * ((100 - state.commissionRate)/100))}</td>
+                    <td class="p-3 text-sky-600">₹${b.driverFee}</td>
+                    <td class="p-3 font-bold text-amber-600">₹${b.commissionFee}</td>
+                </tr>
+            `).join('');
+
+            // All Bookings Table
+            const allTable = document.getElementById('admin-all-bookings-table');
+            allTable.innerHTML = state.bookings.map(b => `
+                <tr>
+                    <td class="p-3 font-mono font-bold">${b.id}</td>
+                    <td class="p-3">${b.customerName}</td>
+                    <td class="p-3">${b.vehTitle}</td>
+                    <td class="p-3">${b.durationValue} ${b.durationType}(s)</td>
+                    <td class="p-3">${b.driverName || 'None'}</td>
+                    <td class="p-3 font-bold">₹${b.totalAmount}</td>
+                    <td class="p-3"><span class="px-2 py-0.5 rounded bg-slate-100 text-slate-800 font-semibold text-[10px]">${b.status}</span></td>
+                </tr>
+            `).join('');
+        }
+
+        function verifyUserDoc(userId) {
+            const u = state.users.find(x => x.id === userId);
+            if(u) {
+                u.verified = true;
+                saveStore();
+                showToast(`Approved ID verification for ${u.name}`, "success");
+                renderAllViews();
+            }
+        }
+
+        function saveCommissionRate() {
+            const val = parseFloat(document.getElementById('admin-comm-input').value);
+            if(val >= 0 && val <= 50) {
+                state.commissionRate = val;
+                saveStore();
+                showToast(`Commission rate set to ${val}%`, "success");
+                renderAllViews();
+            }
+        }
+
+
+        // =================================================================
+        // AUTHENTICATION LOGIC & UTILS
+        // =================================================================
+        function openAuthModal(mode) {
+            document.getElementById('modal-auth').classList.remove('hidden');
+            const title = document.getElementById('auth-modal-title');
+            const submitBtn = document.getElementById('auth-submit-btn');
+            const extra = document.getElementById('register-extra-fields');
+
+            if(mode === 'register') {
+                title.innerText = "Create New Rent-O-Drive Account";
+                submitBtn.innerText = "Complete Registration";
+                extra.classList.remove('hidden');
+            } else {
+                title.innerText = "Sign In to Rent-O-Drive";
+                submitBtn.innerText = "Sign In";
+                extra.classList.add('hidden');
+            }
+        }
+
+        function toggleAuthFields() {
+            const role = document.getElementById('auth-role').value;
+            const dlContainer = document.getElementById('dl-input-container');
+            if(role === 'driver' || role === 'customer') {
+                dlContainer.classList.remove('hidden');
+            } else {
+                dlContainer.classList.add('hidden');
+            }
+        }
+
+        function handleAuthSubmit(e) {
+            e.preventDefault();
+            const email = document.getElementById('auth-email').value;
+            const role = document.getElementById('auth-role').value;
+            const name = document.getElementById('auth-name').value || email.split('@')[0];
+            const idProof = document.getElementById('auth-idproof').value || 'GOV-ID-DEFAULT';
+            const dl = document.getElementById('auth-dl').value || 'DL-DEFAULT';
+
+            let existing = state.users.find(u => u.email === email);
+            if(!existing) {
+                existing = {
+                    id: 'u_' + Date.now(),
+                    email: email,
+                    name: name,
+                    role: role,
+                    idProof: idProof,
+                    dlNumber: dl,
+                    verified: true
+                };
+                state.users.push(existing);
+            }
+
+            state.currentUser = existing;
+            saveStore();
+            closeModal('modal-auth');
+            showToast(`Welcome ${existing.name}! Logged in as ${role.toUpperCase()}`, "success");
+            switchRole(role);
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function showToast(msg, type = "info") {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+
+            let bg = 'bg-slate-900 text-white';
+            if(type === 'success') bg = 'bg-emerald-600 text-white';
+            if(type === 'error') bg = 'bg-rose-600 text-white';
+
+            toast.className = `${bg} px-4 py-2.5 rounded-xl shadow-lg text-xs font-bold flex items-center gap-2 transform transition-all duration-300`;
+            toast.innerHTML = `<i class="fa-solid fa-circle-info"></i> ${msg}`;
+
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Initialize App on DOM Load
+        window.onload = function() {
+            initStore();
+        };
+    </script>
+</body>
+</html>
